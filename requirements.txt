@@ -1,8 +1,0 @@
-psutil
-requests
-pandas
-numpy
-scikit-learn
-pywin32
-uiautomation
-pygetwindow
