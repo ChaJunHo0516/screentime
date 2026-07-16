@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - 회원가입</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-screen" class="screen active">
+        <div class="login-box">
+            <h1 style="color: #4CAF50;">✨ 회원가입</h1>
+            <p style="margin-bottom: 25px;">FocusFlow에 오신 것을 환영합니다</p>
+            
+            <input type="text" id="userId" placeholder="사용할 아이디">
+            <input type="password" id="userPw" placeholder="사용할 비밀번호">
+            <input type="text" id="userName" placeholder="사용할 닉네임">
+            
+            <button onclick="register()" style="background-color: #4CAF50;">가입 완료하기</button>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #aaa;">
+                이미 계정이 있으신가요? <br>
+                <a href="/" style="color: #ff4b4b; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px;">👈 로그인 하러가기</a>
+            </p>
+            
+            <p id="register-error" class="error-msg"></p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

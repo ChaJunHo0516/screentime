@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - 온라인 강의 대시보드</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        /* ── 헤더 ── */
+        .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn { border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .btn-blue  { background: #2196F3; color: #fff; }
+        .btn-blue:hover  { background: #1976D2; }
+        .btn-green { background: #4CAF50; color: #fff; }
+        .btn-green:hover { background: #388E3C; }
+        .btn-red   { background: #f44336; color: #fff; }
+        .btn-red:hover   { background: #c62828; }
+        .btn-purple{ background: #7c3aed; color: #fff; }
+        .btn-purple:hover{ background: #5b21b6; }
+        .btn-gray  { background: #555; color: #ccc; border: 1px solid #666; }
+        .btn-gray:hover  { background: #666; }
+        #tracking-status-dot {
+            display: inline-block; width: 10px; height: 10px;
+            border-radius: 50%; background: #4CAF50;
+            box-shadow: 0 0 6px #4CAF50;
+            margin-right: 4px; transition: 0.3s;
+        }
+        #tracking-status-dot.off { background: #f44336; box-shadow: 0 0 6px #f44336; }
+
+        /* ── 차트 카드 ── */
+        .chart-container { position: relative; width: 100%; height: 230px; }
+        .chart-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+        .chart-title-row h3 { margin: 0; color: #ddd; }
+        .time-toggle-btn {
+            padding: 5px 16px; border-radius: 20px; border: 1px solid #2196F3;
+            background: #1a2a3a; color: #2196F3; cursor: pointer; font-size: 13px;
+            font-weight: bold; transition: 0.2s; letter-spacing: 0.5px;
+        }
+        .time-toggle-btn:hover { background: #2196F3; color: #fff; }
+        .hour-tab-btn {
+            padding: 4px 12px; border-radius: 4px; border: 1px solid #555;
+            background: #2a2a38; color: #aaa; cursor: pointer; font-size: 12px; transition: 0.2s;
+        }
+        .hour-tab-btn.active { background: #2196F3; border-color: #2196F3; color: #fff; }
+        .hour-tab-btn:hover:not(.active) { background: #3a3a4a; color: #ddd; }
+
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .calendar-header h3 { margin: 0; color: #ddd; }
+        .cal-nav { display: flex; gap: 6px; align-items: center; }
+        .cal-nav button { background: #333; border: 1px solid #555; color: #ccc; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .cal-nav button:hover { background: #444; }
+        .cal-month-label { color: #fff; font-weight: bold; font-size: 14px; min-width: 90px; text-align: center; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-day-header { text-align: center; font-size: 11px; color: #888; padding: 4px 0; font-weight: bold; }
+        .cal-day-header.sun { color: #f87171; }
+        .cal-day-header.sat { color: #60a5fa; }
+        .cal-cell {
+            aspect-ratio: 1; border-radius: 6px; background: #1e1e28;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.15s; border: 1.5px solid transparent;
+            padding: 2px;
+        }
+        .cal-cell:hover { border-color: #555; background: #2a2a38; }
+        .cal-cell.today { border-color: #2196F3 !important; }
+        .cal-cell.selected { border-color: #4CAF50 !important; background: #1a2e1a; }
+        .cal-cell.empty { background: transparent; cursor: default; }
+        .cal-cell.empty:hover { background: transparent; border-color: transparent; }
+        .cal-date { font-size: 11px; color: #999; line-height: 1; }
+        .cal-date.sun { color: #f87171; }
+        .cal-date.sat { color: #60a5fa; }
+        .cal-score { font-size: 13px; font-weight: bold; line-height: 1.2; margin-top: 2px; }
+        .cal-score.high   { color: #4CAF50; }
+        .cal-score.mid    { color: #FFC107; }
+        .cal-score.low    { color: #f87171; }
+        .cal-score.none   { color: #555; }
+        .cal-bar { width: 80%; height: 3px; border-radius: 2px; margin-top: 2px; background: #333; }
+        .cal-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+        /* 날짜 상세 패널 */
+        .date-detail {
+            margin-top: 12px; padding: 12px 16px; border-radius: 8px;
+            background: #1a1a26; border: 1px solid #333; font-size: 13px;
+        }
+        .date-detail h4 { color: #aaa; margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: #ccc; }
+        .detail-val { font-weight: bold; }
+
+        /* ── 5열 그리드 조정 ── */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .card-full { grid-column: 1 / -1; }
+
+        /* ── big score ── */
+        .big-score { font-size: 64px; font-weight: bold; color: #4CAF50; text-align: center; margin: 8px 0 4px; line-height: 1; }
+        .score-card p { text-align: center; color: #aaa; font-size: 13px; }
+
+        /* ── nudge ── */
+        .nudge-box { padding: 15px; border-radius: 8px; background: rgba(255,75,75,0.08); border-left: 5px solid #f44336; }
+        .nudge-box h3 { color: #f44336; margin: 0 0 10px; }
+        .focus-stats { margin-top: 10px; font-size: 13px; color: #aaa; }
+        .status-content p { margin: 6px 0; color: #ccc; font-size: 14px; }
+        .status-content span { color: #fff; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <!-- ── HEADER ── -->
+    <header style="display:flex; justify-content:space-between; align-items:center; padding-bottom:18px; border-bottom:1px solid #333; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+        <h1 style="margin:0;">FocusFlow <span style="font-size:0.55em; color:#2196F3;">온라인 강의 모드</span></h1>
+        <div class="header-actions">
+            <!-- 랭킹 버튼 추가 -->
+            <button class="btn btn-purple" onclick="location.href='/ranking.html'">🏆 랭킹 보기</button>
+            
+            <span style="font-size:13px; color:#aaa; display:flex; align-items:center;">
+                <span id="tracking-status-dot"></span>
+                <span id="tracking-label">추적 중</span>
+            </span>
+            <button id="btn-track-start" class="btn btn-green" onclick="startTracking()" style="display:none;">▶ 시작</button>
+            <button id="btn-track-stop"  class="btn btn-red"   onclick="stopTracking()">⏸ 정지</button>
+
+            <!-- 기타 -->
+            <button class="btn btn-blue" onclick="fetchLatestLog()">🔄 새로고침</button>
+            <span id="user-display-name" style="font-weight:bold; color:#eee; font-size:14px;">사용자</span>
+            <button class="btn btn-gray" onclick="logout()">로그아웃</button>
+        </div>
+    </header>
+
+    <!-- ── GRID ── -->
+    <main class="dashboard-grid">
+
+        <!-- 1. 실시간 추적 상태 -->
+        <div class="card status-card">
+            <h3 style="margin-bottom:12px; color:#ddd;">실시간 추적 상태</h3>
+            <div class="status-content">
+                <p>현재 띄워둔 앱: <span id="current-app">측정 중...</span></p>
+                <p>학습 상태: <span id="app-category">-</span></p>
+                <p>체류 시간: <span id="app-time">0</span>초</p>
+            </div>
+        </div>
+
+        <!-- 2. AI 학습 코치 -->
+        <div class="card nudge-card">
+            <div class="nudge-box">
+                <h3>AI 학습 코치</h3>
+                <div id="ai-nudge">데이터를 분석하고 있습니다.</div>
+                <div class="focus-stats">최근 1시간 집중률: <span id="focus-percent">0</span>%</div>
+            </div>
+        </div>
+
+        <!-- 3. 오늘 점수 -->
+        <div class="card score-card">
+            <h3 style="margin-bottom:6px; color:#ddd;">오늘의 강의 집중 점수</h3>
+            <div id="today-score" class="big-score">0점</div>
+            <p id="score-desc">강의 시청을 시작하여 점수를 올려보세요.</p>
+        </div>
+
+        <!-- 시간대별 집중 흐름 -->
+        <div class="card chart-card">
+            <div class="chart-title-row">
+                <h3 id="bar-chart-title">시간대별 집중 흐름 (분)</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="time-toggle-btn" id="btn-time-unit" onclick="toggleTimeUnit()">시간</button>
+                    <button class="time-toggle-btn" id="btn-chart-type" onclick="toggleChartType()">점선</button>
+                </div>
+            </div>
+            <div id="hour-tabs" style="display:none; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+                <button class="hour-tab-btn active" data-hours="1"  onclick="selectHourTab(this)">1시간</button>
+                <button class="hour-tab-btn"        data-hours="2"  onclick="selectHourTab(this)">2시간</button>
+                <button class="hour-tab-btn"        data-hours="3"  onclick="selectHourTab(this)">3시간</button>
+                <button class="hour-tab-btn"        data-hours="6"  onclick="selectHourTab(this)">6시간</button>
+                <button class="hour-tab-btn"        data-hours="12" onclick="selectHourTab(this)">12시간</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. 강의 집중 vs 이탈 비율 -->
+        <div class="card chart-card">
+            <h3 style="margin-bottom:10px; color:#ddd;">강의 집중 vs 이탈 비율</h3>
+            <div class="chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 집중 흐름 달력 카드 -->
+        <div class="card" style="grid-column: 2 / 3; grid-row: 3 / 4;">
+            <div class="calendar-header">
+                <h3>집중 흐름 달력</h3>
+                <div class="cal-nav">
+                    <button onclick="calPrevMonth()">‹</button>
+                    <span class="cal-month-label" id="cal-month-label">2026년 5월</span>
+                    <button onclick="calNextMonth()">›</button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="cal-header">
+                <div class="cal-day-header sun">일</div>
+                <div class="cal-day-header">월</div>
+                <div class="cal-day-header">화</div>
+                <div class="cal-day-header">수</div>
+                <div class="cal-day-header">목</div>
+                <div class="cal-day-header">금</div>
+                <div class="cal-day-header sat">토</div>
+            </div>
+            <div class="calendar-grid" id="cal-grid" style="margin-top:4px;"></div>
+
+            <div class="date-detail" id="date-detail" style="display:none;">
+                <h4 id="detail-date-label">날짜</h4>
+                <div class="detail-row"><span>집중 점수</span><span class="detail-val" id="detail-score">-</span></div>
+                <div class="detail-row"><span>강의 시청</span><span class="detail-val" id="detail-lecture">-</span></div>
+                <div class="detail-row"><span>딴짓/이탈</span><span class="detail-val" id="detail-distract">-</span></div>
+                <div class="detail-row"><span>집중률</span><span class="detail-val" id="detail-rate">-</span></div>
+            </div>
+        </div>
+
+        <!-- 🌟 추가됨: 집중 키워드 관리 카드 -->
+        <div class="card card-full" style="border: 1px solid #4CAF50;">
+            <h3 style="margin-bottom:10px; color:#4CAF50;">🎯 집중도 판별 앱(키워드) 추가 및 삭제</h3>
+            <p style="color:#888; font-size:12px; margin-bottom:15px;">이곳에 등록된 단어가 포함된 창(앱/웹)을 띄우면 '강의 수강 중'으로 인정됩니다.</p>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="new-keyword-input" placeholder="추가할 키워드 (예: react, 인강)" style="flex:1; padding:10px; border-radius:4px; border:1px solid #334155; background:#1e293b; color:#fff;">
+                <button class="btn btn-green" onclick="addFocusKeyword()">추가하기</button>
+            </div>
+            <div id="keyword-list-container" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <!-- 키워드가 동적으로 렌더링됩니다 -->
+            </div>
+        </div>
+
+    </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

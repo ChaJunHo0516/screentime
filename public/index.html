@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - 로그인</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-screen" class="screen active">
+        <div class="login-box">
+            <h1>FocusFlow</h1>
+            <p>AI 스크린타임 코치</p>
+            
+            <input type="text" id="userId" placeholder="아이디">
+            <input type="password" id="userPw" placeholder="비밀번호">
+            
+            <button onclick="login()">로그인</button>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #aaa;">
+                아직 계정이 없으신가요? <br>
+                <a href="/register.html" style="color: #4CAF50; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px;">👉 회원가입 하러가기</a><br>
+                <a href="/admin.html" style="color: #2196F3; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px;">🔐 관리자 페이지</a>
+            </p>
+            
+            <p id="login-error" class="error-msg"></p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>명예의 전당 - FocusFlow</title>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; margin: 0; padding-bottom: 100px; }
+        .ranking-container { max-width: 600px; margin: 50px auto; padding: 0 20px; }
+        .ranking-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { background: #334155; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .back-btn:hover { background: #475569; }
+        .ranking-list { list-style: none; padding: 0; margin: 0; background: #1e293b; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .ranking-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.1em; }
+        .ranking-item:last-child { border-bottom: none; }
+        .rank-medal { font-size: 1.5em; width: 40px; display: inline-block; text-align: center; }
+        .my-item { background: rgba(76, 175, 80, 0.2); border-radius: 8px; font-weight: bold; border: 1px solid #4CAF50; }
+        .my-status-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #1e293b; border-top: 2px solid #4CAF50; padding: 20px 0; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); display: flex; justify-content: center; z-index: 100; }
+        .my-status-content { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <div class="ranking-container">
+        <div class="ranking-header">
+            <h1 id="ranking-title" style="color: #FFD700; margin: 0;">🏆 명예의 전당 (Top 10)</h1>
+            <a href="/dashboard.html" class="back-btn">🔙 돌아가기</a>
+        </div>
+        <ul id="ranking-list" class="ranking-list">
+            <li style="text-align: center; color: #aaa; padding: 20px;">랭킹 데이터를 불러오는 중입니다...</li>
+        </ul>
+    </div>
+    <div class="my-status-bar">
+        <div class="my-status-content">
+            <div><span style="color: #aaa; font-size: 0.9em;">내 아이디: </span><span id="my-id-display" style="font-weight: bold; color: white;">-</span></div>
+            <div><span style="color: #aaa; font-size: 0.9em; margin-right: 10px;">내 순위:</span><span id="my-rank-display" style="font-weight: bold; color: #FFD700; font-size: 1.3em;">-</span><span style="color: #aaa; margin: 0 10px;">|</span><span id="my-score-display" style="font-weight: bold; color: #4CAF50; font-size: 1.3em;">0점</span></div>
+        </div>
+    </div>
+    <script>
+        async function loadRanking() {
+            try {
+                // 🌟 관리자 여부 확인하여 쿼리 전송
+                const myId = localStorage.getItem('focusflow_user_id') || '사용자';
+                const adminId = localStorage.getItem('focusflow_admin_id');
+                const isAdmin = !!adminId;
+                document.getElementById('my-id-display').innerText = myId;
+
+                const response = await fetch(`http://localhost:3000/api/ranking/top10?isAdmin=${isAdmin}`);
+                const data = await response.json();
+                
+                const rankingList = document.getElementById('ranking-list');
+                rankingList.innerHTML = ''; 
+
+                // 🌟 시간이 아니어서 서버가 잠궜을 경우
+                if (data.isLocked) {
+                    rankingList.innerHTML = `<li style="text-align: center; padding: 40px; color: #FFC107; font-size: 1.1em; line-height:1.6;">
+                        <span style="font-size:2em; display:block; margin-bottom:10px;">🔒</span>
+                        ${data.message.replace(/\n/g, '<br>')}
+                    </li>`;
+                    return;
+                }
+
+                if (data.success && data.ranking) {
+                    if (data.quarter) {
+                        document.getElementById('ranking-title').innerText = `🏆 ${data.quarter}분기 명예의 전당`;
+                    }
+
+                    let myRankStr = "10위권 밖"; 
+                    let myScoreVal = 0;
+
+                    if (data.ranking.length === 0) {
+                        rankingList.innerHTML = '<li style="text-align: center; color: #aaa; padding: 20px;">이번 분기에 아직 집계된 데이터가 없습니다.</li>';
+                    } else {
+                        data.ranking.forEach(user => {
+                            let rankIcon = `<span class="rank-medal">🎖️</span>`;
+                            if (user.rank === 1) rankIcon = `<span class="rank-medal">🥇</span>`;
+                            else if (user.rank === 2) rankIcon = `<span class="rank-medal">🥈</span>`;
+                            else if (user.rank === 3) rankIcon = `<span class="rank-medal">🥉</span>`;
+                            
+                            const isMe = user.userId === myId;
+                            if (isMe) { myRankStr = `${user.rank}위`; myScoreVal = user.rewardScore; }
+                            
+                            const li = document.createElement('li');
+                            li.className = `ranking-item ${isMe ? 'my-item' : ''}`;
+                            li.innerHTML = `<div>${rankIcon} <span style="margin-left: 10px; ${isMe ? 'color: #4CAF50;' : ''}">${user.userId} ${isMe ? '(나)' : ''}</span></div>
+                                            <div style="color: #2196F3; font-weight: bold;">${user.rewardScore} 점</div>`;
+                            rankingList.appendChild(li);
+                        });
+                    }
+                    document.getElementById('my-rank-display').innerText = myRankStr;
+                    document.getElementById('my-score-display').innerText = myScoreVal + "점";
+                }
+            } catch (error) {
+                document.getElementById('ranking-list').innerHTML = '<li style="text-align: center; color: #ff5252;">서버 연결 실패</li>';
+            }
+        }
+        window.onload = loadRanking;
+    </script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - 관리자</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="admin-login-screen" class="screen active">
+        <div class="login-box">
+            <h1>FocusFlow 관리자</h1>
+            <p>예외 보호 장치 관리 페이지</p>
+            <input type="text" id="adminId" placeholder="관리자 ID" value="admin">
+            <input type="password" id="adminPw" placeholder="관리자 비밀번호" value="admin">
+            <button onclick="adminLogin()">관리자 로그인</button>
+            <p id="admin-login-message" class="error-msg"></p>
+            <p style="margin-top: 20px; font-size: 14px;"><a href="/" style="color:#4CAF50; text-decoration:none;">사용자 로그인으로 이동</a></p>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="admin-container hidden">
+        <header>
+            <div>
+                <h1>FocusFlow <span style="font-size:0.55em; color:#4CAF50;">관리자</span></h1>
+                <p style="color:#aaa; margin-top:6px;">집중 붕괴 예외 상황을 관리하는 보호자 모드</p>
+            </div>
+            <div class="header-actions">
+                <span id="admin-display-name">관리자</span>
+                <button class="refresh-btn" onclick="loadAdminData()">새로고침</button>
+                <button class="logout-btn" onclick="adminLogout()">로그아웃</button>
+            </div>
+        </header>
+
+        <main class="admin-grid">
+            
+            <!-- 🌟 새로 추가된 기능: 관리자용 랭킹(명예의 전당) 확인 🌟 -->
+            <section class="card admin-card wide-card" style="border: 1px solid #FFD700;">
+                <h3 id="admin-ranking-title" style="color: #FFD700;">🏆 명예의 전당 (Top 10)</h3>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>사용자 ID</th>
+                                <th>집중 점수 (점)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-ranking-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card admin-card wide-card">
+                <h3>사용자 집중 상태 요약</h3>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>사용자 ID</th>
+                                <th>닉네임</th>
+                                <th>오늘 집중</th>
+                                <th>오늘 이탈</th>
+                                <th>활성 차단</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card admin-card">
+                <h3>방해 앱 등록</h3>
+                <input type="text" id="blockUserId" placeholder="사용자 ID 예: jy16">
+                <input type="text" id="blockAppName" placeholder="차단 앱 이름 예: Steam">
+                <button onclick="addBlockedApp()">차단 앱 등록</button>
+                <p class="hint-text">앱 이름은 실행 창 제목에 포함되는 단어로 입력하면 됩니다.</p>
+            </section>
+
+            <section class="card admin-card">
+                <h3>차단 해제 승인</h3>
+                <input type="text" id="unlockUserId" placeholder="사용자 ID 예: jy16">
+                <input type="text" id="unlockAppName" placeholder="해제 앱 이름 예: Steam">
+                <input type="number" id="unlockMinutes" placeholder="해제 시간(분)" value="10">
+                <input type="password" id="unlockAdminPw" placeholder="관리자 비밀번호">
+                <button onclick="approveUnlock()">임시 해제 승인</button>
+                <p class="hint-text">승인된 시간 동안 tracker.py가 해당 앱을 차단하지 않습니다.</p>
+            </section>
+
+            <section class="card admin-card" style="border: 1px solid #2196F3;">
+                <h3 style="color: #2196F3;">🎯 집중 앱 등록 (허용 앱)</h3>
+                <input type="text" id="focusUserId" placeholder="사용자 ID 예: jy16">
+                <input type="text" id="focusAppName" placeholder="집중 앱 이름 예: Visual Studio">
+                <button onclick="addFocusApp()" style="background:#2196F3;">집중 앱 등록</button>
+                <p class="hint-text">여기에 등록된 앱이 켜져 있으면 AI가 '집중'으로 인정합니다.</p>
+            </section>
+
+            <section class="card admin-card wide-card">
+                <h3>차단 앱 목록</h3>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>사용자</th>
+                                <th>앱 이름</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blocked-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card admin-card wide-card" style="border: 1px solid #2196F3;">
+                <h3 style="color: #2196F3;">🎯 집중 앱 목록 (허용 앱)</h3>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>사용자</th>
+                                <th>앱 이름</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="focus-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card admin-card wide-card">
+                <h3>차단/해제 로그</h3>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>사용자</th>
+                                <th>앱</th>
+                                <th>유형</th>
+                                <th>사유</th>
+                            </tr>
+                        </thead>
+                        <tbody id="event-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card admin-card">
+                <h3>넛지 메시지 관리</h3>
+                <div id="nudge-message-list"></div>
+            </section>
+
+            <section class="card admin-card">
+                <h3>AI 보상 기준 관리</h3>
+                <div id="reward-rule-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    
+    <script>
+        const originalLoadAdminData = window.loadAdminData;
+        window.loadAdminData = async function() {
+            if(originalLoadAdminData) await originalLoadAdminData();
+            await loadFocusApps();
+        };
+
+        // 차준호 2026-05-17 추가 | 5초마다 집중 앱 목록 실시간 갱신 (사용자 add/delete 즉시 반영)
+        window.addEventListener('load', () => {
+            setInterval(() => {
+                const panel = document.getElementById('admin-panel');
+                if (panel && !panel.classList.contains('hidden')) {
+                    loadFocusApps();
+                }
+            }, 5000);
+        });
+
+        // 차준호 2026-05-17 추가 | 집중 앱 목록 - DB 앱만 표시 (user_id 그대로 반영)
+        // 어드민이 junho + chrome 입력 → junho | chrome 표시
+        // 사용자 inha가 카카오톡 추가 → inha | 카카오톡 표시
+        async function loadFocusApps() {
+            const tbody = document.getElementById('focus-table-body');
+            if (!tbody) return;
+            try {
+                // DB focus_apps fetch (user_id, app_name 그대로 표시)
+                const dbRes = await fetch('/api/admin/focus-apps');
+                const dbData = await dbRes.json();
+                const dbApps = dbData.success ? dbData.focus_apps : [];
+
+                if (dbApps.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="color:#aaa; text-align:center;">등록된 집중 앱 없음</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = dbApps.map(item => `
+                    <tr>
+                        <td>${item.app_id}</td>
+                        <td style="color:#4CAF50;">${item.user_id}</td>
+                        <td><span style="font-weight:bold;">${item.app_name}</span></td>
+                        <td>
+                            <button class="small-btn" style="background:#f44336;"
+                                onclick="deleteFocusApp(${item.app_id})">삭제</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        // 차준호 2026-05-17 추가 | config.json 키워드 삭제 (어드민에서)
+        async function deleteConfigKeyword(kw) {
+            if (!confirm(`'${kw}' 키워드를 삭제할까요?`)) return;
+            try {
+                const res = await fetch('/api/config/keywords', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword: kw })
+                });
+                const data = await res.json();
+                if (data.success) loadFocusApps();
+                else alert(data.message || '삭제 실패');
+            } catch(e) { alert('서버 연결 실패'); }
+        }
+
+        // 집중 앱 등록
+        async function addFocusApp() {
+            const userId = document.getElementById('focusUserId').value.trim();
+            const appName = document.getElementById('focusAppName').value.trim();
+            const adminId = typeof getAdminId === 'function' ? getAdminId() : 'admin';
+            
+            if (!userId || !appName) return alert('사용자 ID와 앱 이름을 입력하세요.');
+            
+            try {
+                const res = await fetch('/api/admin/focus-apps', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, app_name: appName, admin_id: adminId })
+                });
+                const data = await res.json();
+                alert(data.message || (data.success ? '등록 완료' : '등록 실패'));
+                if (data.success) {
+                    document.getElementById('focusAppName').value = '';
+                    loadFocusApps();
+                }
+            } catch(e) { alert('서버 연결 실패'); }
+        }
+
+        // 집중 앱 삭제
+        async function deleteFocusApp(appId) {
+            if (!confirm('이 집중 허용 앱을 삭제하시겠습니까?')) return;
+            try {
+                const res = await fetch('/api/admin/focus-apps/' + appId, { method: 'DELETE' });
+                const data = await res.json();
+                alert(data.message || (data.success ? '삭제 완료' : '삭제 실패'));
+                loadFocusApps();
+            } catch(e) { alert('서버 연결 실패'); }
+        }
+    </script>
+</body>
+</html>

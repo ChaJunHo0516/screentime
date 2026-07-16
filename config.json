@@ -1,0 +1,14 @@
+{
+  "user_id": "inha",
+  "server_base_url": "http://localhost:3000",
+  "poll_interval_seconds": 3,
+  "nudge_threshold_seconds": 300,
+  "nudge_cooldown_seconds": 60,
+  "block_check_interval_seconds": 3,
+  "lecture_keywords": [
+    "cmd",
+    "chrome",
+    "youtube"
+  ],
+  "default_blocked_apps": []
+}
