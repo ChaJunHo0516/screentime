@@ -1,0 +1,31 @@
+# --- Secrets: 절대 커밋하지 않는다 ---
+.env
+.env.*
+!.env.example
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+public/package-lock.json
+
+# --- Python agent ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+# agent 로컬 데이터 (Phase 3 SQLite 큐, 토큰 fallback 파일 등)
+agent_data/
+*.sqlite
+*.sqlite3
+*.db
+
+# --- DB 백업 (평문 비밀번호가 들어 있을 수 있음) ---
+*.sql.bak
+backup_*.sql
+dumps/
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

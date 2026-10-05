@@ -1,0 +1,45 @@
+{
+  "name": "screentime",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "migrate": "node database/migrate.js",
+    "migrate:status": "node database/migrate.js --status",
+    "hash-passwords": "node scripts/hash-existing-passwords.js",
+    "create-admin": "node scripts/create-admin.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myeongjunyoung/screentime.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/myeongjunyoung/screentime/issues"
+  },
+  "homepage": "https://github.com/myeongjunyoung/screentime#readme",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "mysql2": "^3.20.0",
+    "youtube-transcript": "^1.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
